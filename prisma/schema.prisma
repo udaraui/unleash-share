@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  fullName  String   @map("full_name")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  folders               Folder[]
+  assets                Asset[]
+  internalShares        InternalShare[]
+  externalSharesCreated ExternalShare[]
+
+  @@map("users")
+}
+
+model Folder {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  parentFolderId String?  @map("parent_folder_id") @db.Uuid
+  ownerId        String   @map("owner_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  parentFolder   Folder?         @relation("FolderToFolder", fields: [parentFolderId], references: [id])
+  childFolders   Folder[]        @relation("FolderToFolder")
+  owner          User            @relation(fields: [ownerId], references: [id])
+  assets         Asset[]
+  internalShares InternalShare[]
+
+  @@map("folders")
+}
+
+model Asset {
+  id               String   @id @default(uuid()) @db.Uuid
+  fileName         String   @map("file_name")
+  folderId         String?  @map("folder_id") @db.Uuid
+  ownerId          String   @map("owner_id") @db.Uuid
+  azureStoragePath String   @map("azure_storage_path")
+  mimeType         String   @map("mime_type")
+  isZippedSite     Boolean  @default(false) @map("is_zipped_site")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  folder         Folder?         @relation(fields: [folderId], references: [id])
+  owner          User            @relation(fields: [ownerId], references: [id])
+  internalShares InternalShare[]
+  externalShares ExternalShare[]
+
+  @@map("assets")
+}
+
+model InternalShare {
+  id               String  @id @default(uuid()) @db.Uuid
+  sharedWithUserId String  @map("shared_with_user_id") @db.Uuid
+  folderId         String? @map("folder_id") @db.Uuid
+  assetId          String? @map("asset_id") @db.Uuid
+  permissionLevel  String  @map("permission_level") // 'VIEW' or 'EDIT'
+
+  // Relations
+  sharedWithUser User    @relation(fields: [sharedWithUserId], references: [id])
+  folder         Folder? @relation(fields: [folderId], references: [id])
+  asset          Asset?  @relation(fields: [assetId], references: [id])
+
+  @@map("internal_shares")
+}
+
+model ExternalShare {
+  id              String    @id @default(uuid()) @db.Uuid
+  assetId         String    @map("asset_id") @db.Uuid
+  urlSlug         String    @unique @map("url_slug")
+  authMethod      String    @map("auth_method") // 'PASSWORD', 'EMAIL_OTP', 'MOBILE_OTP'
+  hashedPassword  String?   @map("hashed_password")
+  plainPassword   String?   @map("plain_password")
+  expiresAt       DateTime? @map("expires_at")
+  remark          String?   @map("remark")
+  createdByUserId String    @map("created_by_user_id") @db.Uuid
+
+  // Relations
+  asset         Asset                    @relation(fields: [assetId], references: [id])
+  createdByUser User                     @relation(fields: [createdByUserId], references: [id])
+  recipients    ExternalShareRecipient[]
+
+  @@map("external_shares")
+}
+
+model ExternalShareRecipient {
+  id              String  @id @default(uuid()) @db.Uuid
+  externalShareId String  @map("external_share_id") @db.Uuid
+  recipientEmail  String? @map("recipient_email")
+  recipientMobile String? @map("recipient_mobile")
+
+  // Relations
+  externalShare ExternalShare @relation(fields: [externalShareId], references: [id])
+
+  @@map("external_share_recipients")
+}

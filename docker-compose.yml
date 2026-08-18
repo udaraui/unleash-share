@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: unleash_share
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/unleash_share?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=changeme_unleash_share_secret_123
+      # Add your Azure Storage and Entra ID (Azure AD) credentials here
+      # - AZURE_STORAGE_CONNECTION_STRING=
+      # - AZURE_STORAGE_CONTAINER_NAME=
+      # - AZURE_AD_CLIENT_ID=
+      # - AZURE_AD_CLIENT_SECRET=
+      # - AZURE_AD_TENANT_ID=
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
