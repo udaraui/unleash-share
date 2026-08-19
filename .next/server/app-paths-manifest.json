@@ -1,9 +1,0 @@
-{
-  "/api/shares/internal/route": "app/api/shares/internal/route.js",
-  "/api/shares/external/route": "app/api/shares/external/route.js",
-  "/api/shares/external/verify/route": "app/api/shares/external/verify/route.js",
-  "/api/proxy/[slug]/[[...path]]/route": "app/api/proxy/[slug]/[[...path]]/route.js",
-  "/api/folders/tree/route": "app/api/folders/tree/route.js",
-  "/preview/[slug]/page": "app/preview/[slug]/page.js",
-  "/portal/dashboard/page": "app/portal/dashboard/page.js"
-}
